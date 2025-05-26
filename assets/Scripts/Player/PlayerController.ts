@@ -1,21 +1,17 @@
 import {
   _decorator,
   CCFloat,
-  CCInteger,
-  Collider2D,
   Component,
+  Animation,
+  Vec3,
+  Vec2,
+  RigidBody2D,
+  Collider2D,
   Contact2DType,
-  debug,
-  EventKeyboard,
+  IPhysics2DContact,
   Input,
   input,
-  IPhysics2DContact,
   KeyCode,
-  Node,
-  PhysicsSystem2D,
-  RigidBody2D,
-  Vec2,
-  Vec3,
 } from "cc";
 const { ccclass, property } = _decorator;
 
@@ -30,13 +26,16 @@ export class PlayerController extends Component {
   private Direction: number = 0;
   private rb: RigidBody2D | null = null;
   private col: Collider2D | null = null;
+  private anim: Animation | null = null;
   private onFloor: boolean = false;
+  private isMoving: boolean = false;
 
   private keys: { [key: string]: boolean } = {};
 
   onLoad() {
     this.rb = this.node.getComponent(RigidBody2D);
     this.col = this.getComponent(Collider2D);
+    this.anim = this.getComponent(Animation);
 
     input.on(Input.EventType.KEY_DOWN, this.onKeyPressed, this);
     input.on(Input.EventType.KEY_UP, this.onKeyReleased, this);
@@ -47,7 +46,7 @@ export class PlayerController extends Component {
     }
   }
 
-  onKeyPressed(event: EventKeyboard) {
+  onKeyPressed(event: any) {
     switch (event.keyCode) {
       case KeyCode.KEY_A:
       case KeyCode.ARROW_LEFT:
@@ -65,7 +64,7 @@ export class PlayerController extends Component {
     }
   }
 
-  onKeyReleased(event: EventKeyboard) {
+  onKeyReleased(event: any) {
     switch (event.keyCode) {
       case KeyCode.KEY_A:
       case KeyCode.ARROW_LEFT:
@@ -86,27 +85,31 @@ export class PlayerController extends Component {
   update(deltaTime: number) {
     this.handleMovement();
     this.handleJump();
+    this.updateAnimation();
   }
 
   private handleMovement() {
     this.Direction = 0;
+    this.isMoving = false;
 
     if (this.keys["left"]) {
       this.Direction = -1;
+      this.node.scale = new Vec3(-1, 1, 1);
+      this.isMoving = true;
     }
     if (this.keys["right"]) {
       this.Direction = 1;
+      this.node.scale = new Vec3(1, 1, 1);
+      this.isMoving = true;
     }
 
     if (this.Direction !== 0) {
       const currentVelocity = this.rb.linearVelocity;
       const targetVelocityX = this.Direction * this.movSpeed;
-
       this.rb.linearVelocity = new Vec2(targetVelocityX, currentVelocity.y);
     } else {
       const currentVelocity = this.rb.linearVelocity;
       const friction = 0.8;
-
       this.rb.linearVelocity = new Vec2(
         currentVelocity.x * friction,
         currentVelocity.y
@@ -119,6 +122,20 @@ export class PlayerController extends Component {
       this.rb.linearVelocity = new Vec2(this.rb.linearVelocity.x, 0);
       this.rb.applyLinearImpulse(new Vec2(0, this.jumpForce), Vec2.ZERO, true);
       this.onFloor = false;
+    }
+  }
+
+  private updateAnimation() {
+    if (!this.anim) return;
+
+    if (this.isMoving) {
+      if (!this.anim.getState("Run").isPlaying) {
+        this.anim.play("Run");
+      }
+    } else {
+      if (!this.anim.getState("Idle").isPlaying) {
+        this.anim.play("Idle");
+      }
     }
   }
 
