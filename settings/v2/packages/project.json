@@ -24,14 +24,19 @@
       {
         "index": 4,
         "name": "Nextlevel"
+      },
+      {
+        "index": 5,
+        "name": "Hazards"
       }
     ],
     "collisionMatrix": {
       "0": 31,
       "1": 5,
-      "2": 27,
+      "2": 59,
       "3": 5,
-      "4": 5
+      "4": 5,
+      "5": 4
     }
   }
 }
